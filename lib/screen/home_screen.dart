@@ -19,39 +19,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool textKey = false;
 
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-  }
-
   @override
   void initState() {
-    _determinePosition().then((position) =>
-        Provider.of<LocationProvider>(context, listen: false)
-            .getWeatherByPosition(position.latitude, position.longitude));
+    Provider.of<LocationProvider>(context, listen: false).getLocationName();
+    _locationNameController.text =
+        Provider.of<LocationProvider>(context, listen: false).prefData;
     super.initState();
   }
 
@@ -90,13 +62,16 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 setState(() {
                   textKey = _locationNameController.value.text.isNotEmpty;
                 });
                 // call getWeather by location
                 Provider.of<LocationProvider>(context, listen: false)
                     .getWeatherByLocation(_locationNameController.text);
+
+                Provider.of<LocationProvider>(context, listen: false)
+                    .setLoctionName(_locationNameController.text);
               },
               child: textKey ? const Text("Update") : const Text("Save"),
             ),

@@ -2,12 +2,64 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../model/location_model.dart';
 
 class LocationProvider with ChangeNotifier {
   LocationModel? _locationmodel;
   LocationModel? get locationData => _locationmodel;
+
+  String prefData = '';
+
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+
+  Future<void> getLocationName() async {
+    final pref = await SharedPreferences.getInstance();
+    prefData = pref.getString("locationName") ?? '';
+    if (prefData.isNotEmpty) {
+      getWeatherByLocation(prefData);
+    } else {
+      _determinePosition().then((position) =>
+          getWeatherByPosition(position.latitude, position.longitude));
+      // Provider.of<LocationProvider>(context, listen: false)
+      // .getWeatherByPosition(position.latitude, position.longitude));
+    }
+    notifyListeners();
+  }
+
+  Future<void> setLoctionName(String locName) async {
+    final pref = await SharedPreferences.getInstance();
+    pref.setString("locationName", locName);
+    print(pref.getString("locationName"));
+  }
 
   // get wheather data from api by lat and lng
   Future<void> getWeatherByPosition(double lat, double lng) async {
