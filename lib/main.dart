@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:weather/provider/loction_provider.dart';
 import './screen/help_screen.dart';
 
 void main() {
@@ -10,12 +12,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Weather APP',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return ChangeNotifierProvider(
+      create: (_) => LocationProvider(),
+      child: MaterialApp(
+        title: 'Weather APP',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: const HelpScreen(),
       ),
-      home: const HelpScreen(),
     );
   }
 }
