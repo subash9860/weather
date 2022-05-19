@@ -17,6 +17,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _locationNameController = TextEditingController();
 
+  bool textKey = false;
+
   Future<Position> _determinePosition() async {
     bool serviceEnabled;
 
@@ -89,11 +91,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ElevatedButton(
               onPressed: () {
+                setState(() {
+                  textKey = _locationNameController.value.text.isNotEmpty;
+                });
                 // call getWeather by location
                 Provider.of<LocationProvider>(context, listen: false)
                     .getWeatherByLocation(_locationNameController.text);
               },
-              child: const Text("save"),
+              child: textKey ? const Text("Update") : const Text("Save"),
             ),
             Container(
               height: 100,
@@ -125,13 +130,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontSize: 20,
                           ),
                         ),
-                        CachedNetworkImage(
-                          imageUrl: 'http:${value.locationData?.iconUrl}',
-                          placeholder: (context, url) =>
-                              const CircularProgressIndicator(),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.error),
-                        ),
+                        if (value.locationData?.iconUrl != null)
+                          CachedNetworkImage(
+                            imageUrl: 'http:${value.locationData?.iconUrl}',
+                            placeholder: (context, url) =>
+                                const CircularProgressIndicator(),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.error),
+                          ),
                       ],
                     ),
                   );
